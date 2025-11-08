@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Control App</title>
+    
+    <!-- Bootstrap 5.3.0 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome 6.4.0 -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link href="css/app.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#" onclick="showPage('dashboard')">
+                <i class="fas fa-wallet me-2"></i>Expense Control
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showPage('dashboard')">
+                            <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showPage('transactions')">
+                            <i class="fas fa-list me-1"></i>Transactions
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showPage('reports')">
+                            <i class="fas fa-chart-bar me-1"></i>Reports
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" onclick="showPage('categories')">
+                            <i class="fas fa-tags me-1"></i>Categories
+                        </a>
+                    </li>
+                </ul>
+                
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                            <i class="fas fa-user me-1"></i>
+                            <span id="userName">User</span>
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" onclick="logout()">
+                                <i class="fas fa-sign-out-alt me-1"></i>Logout
+                            </a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <div class="container-fluid mt-4">
+        <!-- Login Page -->
+        <div id="loginPage" class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow">
+                    <div class="card-header bg-primary text-white text-center">
+                        <h4><i class="fas fa-wallet me-2"></i>Expense Control</h4>
+                        <p class="mb-0">Sign in to your account</p>
+                    </div>
+                    <div class="card-body">
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="loginEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="loginEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="loginPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="loginPassword" required>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-sign-in-alt me-1"></i>Sign In
+                            </button>
+                        </form>
+                        <div class="text-center mt-3">
+                            <p>Don't have an account? <a href="#" onclick="showRegisterForm()">Sign up</a></p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Register Form -->
+                <div id="registerForm" class="card shadow mt-3" style="display: none;">
+                    <div class="card-header bg-success text-white text-center">
+                        <h5><i class="fas fa-user-plus me-2"></i>Create Account</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="registerFormElement">
+                            <div class="mb-3">
+                                <label for="registerFirstName" class="form-label">First Name</label>
+                                <input type="text" class="form-control" id="registerFirstName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="registerLastName" class="form-label">Last Name</label>
+                                <input type="text" class="form-control" id="registerLastName" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="registerEmail" class="form-label">Email</label>
+                                <input type="email" class="form-control" id="registerEmail" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="registerPassword" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="registerPassword" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="registerConfirmPassword" class="form-label">Confirm Password</label>
+                                <input type="password" class="form-control" id="registerConfirmPassword" required>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-user-plus me-1"></i>Create Account
+                            </button>
+                        </form>
+                        <div class="text-center mt-3">
+                            <p>Already have an account? <a href="#" onclick="showLoginForm()">Sign in</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Page -->
+        <div id="dashboardPage" class="page" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <h2><i class="fas fa-tachometer-alt me-2"></i>Dashboard</h2>
+                </div>
+            </div>
+            
+            <!-- KPI Cards -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Total Income</h6>
+                                    <h3 id="totalIncome">$0.00</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-arrow-up fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Total Expenses</h6>
+                                    <h3 id="totalExpenses">$0.00</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-arrow-down fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Current Balance</h6>
+                                    <h3 id="currentBalance">$0.00</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-wallet fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h6 class="card-title">Monthly Balance</h6>
+                                    <h3 id="monthlyBalance">$0.00</h3>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-calendar fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Charts Row -->
+            <div class="row mb-4">
+                <div class="col-md-8">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-line me-2"></i>Monthly Trends</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="monthlyTrendsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="fas fa-chart-pie me-2"></i>Expense Categories</h5>
+                        </div>
+                        <div class="card-body">
+                            <canvas id="expenseCategoriesChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="fas fa-list me-2"></i>Recent Transactions</h5>
+                            <button class="btn btn-primary btn-sm" onclick="showPage('transactions')">
+                                <i class="fas fa-plus me-1"></i>Add Transaction
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="recentTransactions">
+                                <div class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transactions Page -->
+        <div id="transactionsPage" class="page" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2><i class="fas fa-list me-2"></i>Transactions</h2>
+                        <div>
+                            <button class="btn btn-warning me-2" onclick="loadTransactions()">
+                                <i class="fas fa-refresh me-1"></i>Test Load
+                            </button>
+                            <button class="btn btn-primary" onclick="showAddTransactionModal()">
+                                <i class="fas fa-plus me-1"></i>Add Transaction
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Debug Info -->
+                    <div class="alert alert-info" id="debugInfo">
+                        <strong>Debug Info:</strong> <span id="debugText">Loading...</span>
+                        <button class="btn btn-sm btn-outline-primary ms-2" onclick="loadTransactions()">
+                            <i class="fas fa-play me-1"></i>Load Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filters -->
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <label for="filterStartDate" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="filterStartDate">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="filterEndDate" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="filterEndDate">
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="filterCategory" class="form-label">Category</label>
+                                    <select class="form-select" id="filterCategory">
+                                        <option value="">All Categories</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="filterType" class="form-label">Type</label>
+                                    <select class="form-select" id="filterType">
+                                        <option value="">All Types</option>
+                                        <option value="Income">Income</option>
+                                        <option value="Expense">Expense</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="row mt-3">
+                                <div class="col-12">
+                                    <button class="btn btn-primary" onclick="loadTransactions()">
+                                        <i class="fas fa-search me-1"></i>Filter
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="clearFilters()">
+                                        <i class="fas fa-times me-1"></i>Clear
+                                    </button>
+                                    <button class="btn btn-info" onclick="loadTransactions()">
+                                        <i class="fas fa-refresh me-1"></i>Refresh
+                                    </button>
+                                    <button class="btn btn-warning" onclick="testLoadTransactions()">
+                                        <i class="fas fa-bug me-1"></i>Debug Test
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="transactionsTable">
+                                <div class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports Page -->
+        <div id="reportsPage" class="page" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <h2><i class="fas fa-chart-bar me-2"></i>Reports</h2>
+                </div>
+            </div>
+
+            <div class="row mb-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5>Generate Report</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <label for="reportStartDate" class="form-label">Start Date</label>
+                                    <input type="date" class="form-control" id="reportStartDate">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="reportEndDate" class="form-label">End Date</label>
+                                    <input type="date" class="form-control" id="reportEndDate">
+                                </div>
+                                <div class="col-md-4 d-flex align-items-end">
+                                    <div class="btn-group w-100">
+                                        <button class="btn btn-danger" onclick="generatePdfReport()">
+                                            <i class="fas fa-file-pdf me-1"></i>PDF
+                                        </button>
+                                        <button class="btn btn-success" onclick="generateExcelReport()">
+                                            <i class="fas fa-file-excel me-1"></i>Excel
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Categories Page -->
+        <div id="categoriesPage" class="page" style="display: none;">
+            <div class="row">
+                <div class="col-12">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2><i class="fas fa-tags me-2"></i>Categories</h2>
+                        <button class="btn btn-primary" onclick="showAddCategoryModal()">
+                            <i class="fas fa-plus me-1"></i>Add Category
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div id="categoriesTable">
+                                <div class="text-center">
+                                    <div class="spinner-border" role="status">
+                                        <span class="visually-hidden">Loading...</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Transaction Modal -->
+    <div class="modal fade" id="addTransactionModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Transaction</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addTransactionForm">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="transactionDescription" class="form-label">Description *</label>
+                                    <input type="text" class="form-control" id="transactionDescription" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="transactionAmount" class="form-label">Amount *</label>
+                                    <input type="number" class="form-control" id="transactionAmount" step="0.01" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="transactionType" class="form-label">Type *</label>
+                                    <select class="form-select" id="transactionType" required>
+                                        <option value="">Select Type</option>
+                                        <option value="Income">Income</option>
+                                        <option value="Expense">Expense</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="transactionCategory" class="form-label">Category *</label>
+                                    <select class="form-select" id="transactionCategory" required>
+                                        <option value="">Select Category</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="transactionDate" class="form-label">Date *</label>
+                                    <input type="date" class="form-control" id="transactionDate" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="transactionPaymentMethod" class="form-label">Payment Method</label>
+                                    <input type="text" class="form-control" id="transactionPaymentMethod">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="transactionLocation" class="form-label">Location</label>
+                                    <input type="text" class="form-control" id="transactionLocation">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check mt-4">
+                                        <input class="form-check-input" type="checkbox" id="transactionRecurring">
+                                        <label class="form-check-label" for="transactionRecurring">
+                                            Recurring Transaction
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="transactionNotes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="transactionNotes" rows="3"></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveTransaction()">Save Transaction</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div class="modal fade" id="addCategoryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Add Category</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="addCategoryForm">
+                        <div class="mb-3">
+                            <label for="categoryName" class="form-label">Name *</label>
+                            <input type="text" class="form-control" id="categoryName" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="categoryDescription" class="form-label">Description</label>
+                            <input type="text" class="form-control" id="categoryDescription">
+                        </div>
+                        <div class="mb-3">
+                            <label for="categoryType" class="form-label">Type *</label>
+                            <select class="form-select" id="categoryType" required>
+                                <option value="">Select Type</option>
+                                <option value="Income">Income</option>
+                                <option value="Expense">Expense</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="categoryColor" class="form-label">Color</label>
+                            <input type="color" class="form-control form-control-color" id="categoryColor" value="#007bff">
+                        </div>
+                        <div class="mb-3">
+                            <label for="categoryIcon" class="form-label">Icon (Font Awesome class)</label>
+                            <input type="text" class="form-control" id="categoryIcon" placeholder="fas fa-tag">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="saveCategory()">Save Category</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap 5.3.0 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom JavaScript -->
+    <script src="js/app.js"></script>
+</body>
+</html>
