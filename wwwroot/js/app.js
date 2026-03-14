@@ -64,7 +64,7 @@ function clearSession() {
 function handleUnauthorized() {
     clearSession();
     renderAuthView();
-    showToast('Session expired. Please sign in again.', 'warning');
+    showToast('La sesión ha expirado. Inicia sesión de nuevo.', 'warning');
 }
 
 // ========== API CON AUTH ==========
@@ -108,7 +108,7 @@ function renderAppView() {
 
     const nameEl = document.getElementById('userName');
     if (nameEl && currentUser) {
-        nameEl.textContent = [currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ') || currentUser.email || 'User';
+        nameEl.textContent = [currentUser.firstName, currentUser.lastName].filter(Boolean).join(' ') || currentUser.email || 'Usuario';
     }
 
     document.querySelectorAll('.nav-link-page').forEach(link => {
@@ -179,7 +179,7 @@ async function login(email, password) {
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-            showLoginError(data.message || 'Invalid email or password.');
+            showLoginError(data.message || 'Correo o contraseña incorrectos.');
             return;
         }
         authToken = data.token;
@@ -189,7 +189,7 @@ async function login(email, password) {
         renderLayout();
         navigateTo('dashboard');
     } catch (_e) {
-        showLoginError('Unable to connect. Please try again.');
+        showLoginError('No se pudo conectar. Inténtalo de nuevo.');
     }
 }
 
@@ -202,7 +202,7 @@ async function register(payload) {
         });
         const data = await response.json().catch(() => ({}));
         if (!response.ok) {
-            showRegisterError(data.message || 'Registration failed.');
+            showRegisterError(data.message || 'Error al registrarse.');
             return;
         }
         authToken = data.token;
@@ -212,7 +212,7 @@ async function register(payload) {
         renderLayout();
         navigateTo('dashboard');
     } catch (_e) {
-        showRegisterError('Unable to connect. Please try again.');
+        showRegisterError('No se pudo conectar. Inténtalo de nuevo.');
     }
 }
 
@@ -231,7 +231,7 @@ function showToast(message, type) {
     const el = document.createElement('div');
     el.className = `toast align-items-center text-bg-${type === 'danger' ? 'danger' : type === 'success' ? 'success' : 'primary'} border-0`;
     el.setAttribute('role', 'alert');
-    el.innerHTML = `<div class="d-flex"><div class="toast-body">${escapeHtml(message)}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>`;
+    el.innerHTML = `<div class="d-flex"><div class="toast-body">${escapeHtml(message)}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Cerrar"></button></div>`;
     container.appendChild(el);
     const toast = new bootstrap.Toast(el, { delay: 5000 });
     el.addEventListener('hidden.bs.toast', () => el.remove());
@@ -279,8 +279,8 @@ function setupEventListeners() {
         loginPasswordToggle.addEventListener('click', () => {
             const input = document.getElementById('loginPassword');
             const icon = loginPasswordToggle.querySelector('i');
-            if (input.type === 'password') { input.type = 'text'; if (icon) { icon.className = 'fas fa-eye-slash'; } loginPasswordToggle.setAttribute('aria-label', 'Hide password'); }
-            else { input.type = 'password'; if (icon) { icon.className = 'fas fa-eye'; } loginPasswordToggle.setAttribute('aria-label', 'Show password'); }
+            if (input.type === 'password') { input.type = 'text'; if (icon) { icon.className = 'fas fa-eye-slash'; } loginPasswordToggle.setAttribute('aria-label', 'Ocultar contraseña'); }
+            else { input.type = 'password'; if (icon) { icon.className = 'fas fa-eye'; } loginPasswordToggle.setAttribute('aria-label', 'Mostrar contraseña'); }
         });
     }
 
@@ -306,7 +306,7 @@ function setupEventListeners() {
             hideRegisterError();
             const password = document.getElementById('registerPassword').value;
             const confirm = document.getElementById('registerConfirmPassword').value;
-            if (password !== confirm) { showRegisterError('Passwords do not match.'); return; }
+            if (password !== confirm) { showRegisterError('Las contraseñas no coinciden.'); return; }
             const btn = document.getElementById('registerSubmit');
             const btnText = btn?.querySelector('.btn-text');
             const btnLoading = btn?.querySelector('.btn-loading');
@@ -336,8 +336,7 @@ function setDefaultDates() {
     const lastDay = new Date(today.getFullYear(), today.getMonth() + 1, 0);
     const pad = (d) => d.toISOString().split('T')[0];
     const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val; };
-    set('filterStartDate', pad(firstDay));
-    set('filterEndDate', pad(lastDay));
+    // No rellenar filtros de transacciones: primera carga muestra todas; el usuario puede filtrar por fechas después
     set('reportStartDate', pad(firstDay));
     set('reportEndDate', pad(lastDay));
     set('transactionDate', pad(today));
@@ -365,19 +364,25 @@ async function loadDashboard() {
 function updateRecentTransactions(transactions) {
     const container = document.getElementById('recentTransactions');
     if (!container) return;
-    if (!transactions.length) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-receipt"></i><h5>No transactions yet</h5><p>Start by adding your first transaction</p></div>';
+    if (!transactions || !transactions.length) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-receipt"></i><h5>Aún no hay transacciones</h5><p>Añade tu primera transacción</p></div>';
         return;
     }
-    const rows = transactions.map(t => `
-        <tr>
-            <td>${escapeHtml(t.description)}</td>
-            <td>${new Date(t.date).toLocaleDateString()}</td>
-            <td><span class="badge ${t.type === 'Income' ? 'bg-success' : 'bg-danger'}">${escapeHtml(t.type)}</span></td>
-            <td>${escapeHtml(t.categoryName || '-')}</td>
-            <td class="${t.type === 'Income' ? 'income' : 'expense'}">$${Number(t.amount).toFixed(2)}</td>
-        </tr>`).join('');
-    container.innerHTML = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Description</th><th>Date</th><th>Type</th><th>Category</th><th>Amount</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    const rows = transactions.map(t => {
+        const desc = t.description ?? t.Description ?? '';
+        const dateVal = t.date ?? t.Date;
+        const typeVal = (t.type ?? t.Type ?? '').toString();
+        const amount = Number(t.amount ?? t.Amount ?? 0);
+        const catName = t.categoryName ?? t.CategoryName ?? '-';
+        return `<tr>
+            <td>${escapeHtml(desc)}</td>
+            <td>${dateVal ? new Date(dateVal).toLocaleDateString() : '-'}</td>
+            <td><span class="badge ${typeVal === 'Income' ? 'bg-success' : 'bg-danger'}">${typeVal === 'Income' ? 'Ingreso' : 'Gasto'}</span></td>
+            <td>${escapeHtml(catName)}</td>
+            <td class="${typeVal === 'Income' ? 'income' : 'expense'}">$${amount.toFixed(2)}</td>
+        </tr>`;
+    }).join('');
+    container.innerHTML = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Descripción</th><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Monto</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 function loadMonthlyTrendsChart(trends) {
@@ -389,8 +394,8 @@ function loadMonthlyTrendsChart(trends) {
         data: {
             labels: trends.map(t => t.monthName),
             datasets: [
-                { label: 'Income', data: trends.map(t => t.income), borderColor: '#198754', backgroundColor: 'rgba(25,135,84,0.1)', tension: 0.4 },
-                { label: 'Expenses', data: trends.map(t => t.expenses), borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.1)', tension: 0.4 }
+                { label: 'Ingresos', data: trends.map(t => t.income), borderColor: '#198754', backgroundColor: 'rgba(25,135,84,0.1)', tension: 0.4 },
+                { label: 'Gastos', data: trends.map(t => t.expenses), borderColor: '#dc3545', backgroundColor: 'rgba(220,53,69,0.1)', tension: 0.4 }
             ]
         },
         options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { position: 'top' } } }
@@ -428,35 +433,48 @@ async function loadTransactions() {
         if (cat) params.append('categoryId', cat);
         if (type) params.append('type', type);
         const response = await fetchWithAuth(`${API_BASE_URL}/transactions?${params}`);
-        if (!response.ok) return;
-        const list = await response.json();
-        displayTransactions(Array.isArray(list) ? list : []);
-    } catch (_e) {
-        container.innerHTML = '<div class="empty-state"><p class="text-danger">Unable to load transactions.</p></div>';
+        const data = await response.json().catch(() => null);
+        if (!response.ok) {
+            const msg = (data && data.message) ? data.message : `Error ${response.status}`;
+            container.innerHTML = '<div class="empty-state"><p class="text-danger">' + escapeHtml(msg) + '</p><button type="button" class="btn btn-sm btn-primary mt-2" onclick="loadTransactions()">Reintentar</button></div>';
+            return;
+        }
+        const list = Array.isArray(data) ? data : (data && Array.isArray(data.data) ? data.data : (data && Array.isArray(data.items) ? data.items : []));
+        displayTransactions(list);
+    } catch (e) {
+        container.innerHTML = '<div class="empty-state"><p class="text-danger">No se pudieron cargar las transacciones. Comprueba la conexión e inténtalo de nuevo.</p><button type="button" class="btn btn-sm btn-primary mt-2" onclick="loadTransactions()">Reintentar</button></div>';
     }
 }
 
 function displayTransactions(transactions) {
     const container = document.getElementById('transactionsTable');
     if (!container) return;
-    if (!transactions.length) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-receipt"></i><h5>No transactions found</h5><p>Try adjusting filters or add a new transaction</p></div>';
+    if (!transactions || !transactions.length) {
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-receipt"></i><h5>No se encontraron transacciones</h5><p>Ajusta los filtros o añade una nueva transacción</p></div>';
         return;
     }
-    const rows = transactions.map(t => `
-        <tr>
-            <td>${escapeHtml(t.description)}</td>
-            <td>${new Date(t.date).toLocaleDateString()}</td>
-            <td><span class="badge ${t.type === 'Income' ? 'bg-success' : 'bg-danger'}">${escapeHtml(t.type)}</span></td>
-            <td>${escapeHtml(t.categoryName || '-')}</td>
-            <td class="${t.type === 'Income' ? 'income' : 'expense'}">$${Number(t.amount).toFixed(2)}</td>
-            <td>${escapeHtml(t.paymentMethod || '-')}</td>
+    const rows = transactions.map(t => {
+        const desc = t.description ?? t.Description ?? '';
+        const dateVal = t.date ?? t.Date;
+        const typeVal = (t.type ?? t.Type ?? '').toString();
+        const amount = Number(t.amount ?? t.Amount ?? 0);
+        const catName = t.categoryName ?? t.CategoryName ?? '-';
+        const payment = t.paymentMethod ?? t.PaymentMethod ?? '-';
+        const id = t.id ?? t.Id ?? 0;
+        return `<tr>
+            <td>${escapeHtml(desc)}</td>
+            <td>${dateVal ? new Date(dateVal).toLocaleDateString() : '-'}</td>
+            <td><span class="badge ${typeVal === 'Income' ? 'bg-success' : 'bg-danger'}">${typeVal === 'Income' ? 'Ingreso' : 'Gasto'}</span></td>
+            <td>${escapeHtml(catName)}</td>
+            <td class="${typeVal === 'Income' ? 'income' : 'expense'}">$${amount.toFixed(2)}</td>
+            <td>${escapeHtml(payment)}</td>
             <td>
-                <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="editTransaction(${t.id})"><i class="fas fa-edit"></i></button>
-                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteTransaction(${t.id})"><i class="fas fa-trash"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-primary me-1" onclick="editTransaction(${id})"><i class="fas fa-edit"></i></button>
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteTransaction(${id})"><i class="fas fa-trash"></i></button>
             </td>
-        </tr>`).join('');
-    container.innerHTML = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Description</th><th>Date</th><th>Type</th><th>Category</th><th>Amount</th><th>Payment</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+        </tr>`;
+    }).join('');
+    container.innerHTML = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Descripción</th><th>Fecha</th><th>Tipo</th><th>Categoría</th><th>Monto</th><th>Pago</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 function clearFilters() {
@@ -472,7 +490,7 @@ function handleTransactionTypeChange() {
     const type = document.getElementById('transactionType')?.value;
     const select = document.getElementById('transactionCategory');
     if (!select) return;
-    select.innerHTML = '<option value="">Select Category</option>';
+    select.innerHTML = '<option value="">Seleccionar categoría</option>';
     categories.filter(c => c.type === type).forEach(c => select.add(new Option(c.name, c.id)));
 }
 
@@ -501,13 +519,13 @@ async function saveTransaction() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        if (!response.ok) { const d = await response.json().catch(() => ({})); showToast(d.message || 'Failed to add transaction.', 'danger'); return; }
+        if (!response.ok) { const d = await response.json().catch(() => ({})); showToast(d.message || 'Error al añadir la transacción.', 'danger'); return; }
         bootstrap.Modal.getInstance(document.getElementById('addTransactionModal'))?.hide();
         form.reset();
-        showToast('Transaction added.', 'success');
+        showToast('Transacción añadida.', 'success');
         loadTransactions();
         loadDashboard();
-    } catch (_e) { showToast('Failed to add transaction.', 'danger'); }
+    } catch (_e) { showToast('Error al añadir la transacción.', 'danger'); }
 }
 
 // ========== CATEGORÍAS ==========
@@ -527,21 +545,21 @@ async function loadCategories() {
 function populateCategorySelects() {
     const sel1 = document.getElementById('transactionCategory');
     const sel2 = document.getElementById('filterCategory');
-    if (sel1) { sel1.innerHTML = '<option value="">Select Category</option>'; categories.forEach(c => sel1.add(new Option(c.name, c.id))); }
-    if (sel2) { sel2.innerHTML = '<option value="">All</option>'; categories.forEach(c => sel2.add(new Option(c.name, c.id))); }
+    if (sel1) { sel1.innerHTML = '<option value="">Seleccionar categoría</option>'; categories.forEach(c => sel1.add(new Option(c.name, c.id))); }
+    if (sel2) { sel2.innerHTML = '<option value="">Todas</option>'; categories.forEach(c => sel2.add(new Option(c.name, c.id))); }
 }
 
 function displayCategories() {
     const container = document.getElementById('categoriesTable');
     if (!container) return;
     if (!categories.length) {
-        container.innerHTML = '<div class="empty-state"><i class="fas fa-tags"></i><h5>No categories yet</h5><p>Add your first category</p></div>';
+        container.innerHTML = '<div class="empty-state"><i class="fas fa-tags"></i><h5>Aún no hay categorías</h5><p>Añade tu primera categoría</p></div>';
         return;
     }
     const rows = categories.map(c => `
         <tr>
             <td><span class="category-color" style="background-color:${escapeHtml(c.color || '#6c757d')}"></span>${escapeHtml(c.name)}</td>
-            <td><span class="badge ${c.type === 'Income' ? 'bg-success' : 'bg-danger'}">${escapeHtml(c.type)}</span></td>
+            <td><span class="badge ${c.type === 'Income' ? 'bg-success' : 'bg-danger'}">${c.type === 'Income' ? 'Ingreso' : 'Gasto'}</span></td>
             <td>${escapeHtml(c.description || '-')}</td>
             <td><span class="badge" style="background-color:${escapeHtml(c.color || '#6c757d')}">${escapeHtml(c.color || '')}</span></td>
             <td><i class="${escapeHtml(c.icon || 'fas fa-tag')}"></i></td>
@@ -550,7 +568,7 @@ function displayCategories() {
                 <button type="button" class="btn btn-sm btn-outline-danger" onclick="deleteCategory(${c.id})"><i class="fas fa-trash"></i></button>
             </td>
         </tr>`).join('');
-    container.innerHTML = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Name</th><th>Type</th><th>Description</th><th>Color</th><th>Icon</th><th>Actions</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    container.innerHTML = `<div class="table-responsive"><table class="table table-hover"><thead><tr><th>Nombre</th><th>Tipo</th><th>Descripción</th><th>Color</th><th>Icono</th><th>Acciones</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
 function showAddCategoryModal() {
@@ -574,12 +592,12 @@ async function saveCategory() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
-        if (!response.ok) { const d = await response.json().catch(() => ({})); showToast(d.message || 'Failed to add category.', 'danger'); return; }
+        if (!response.ok) { const d = await response.json().catch(() => ({})); showToast(d.message || 'Error al añadir la categoría.', 'danger'); return; }
         bootstrap.Modal.getInstance(document.getElementById('addCategoryModal'))?.hide();
         form.reset();
-        showToast('Category added.', 'success');
+        showToast('Categoría añadida.', 'success');
         loadCategories();
-    } catch (_e) { showToast('Failed to add category.', 'danger'); }
+    } catch (_e) { showToast('Error al añadir la categoría.', 'danger'); }
 }
 
 // ========== REPORTES ==========
@@ -587,7 +605,7 @@ async function saveCategory() {
 async function generatePdfReport() {
     const start = document.getElementById('reportStartDate')?.value;
     const end = document.getElementById('reportEndDate')?.value;
-    if (!start || !end) { showToast('Select start and end dates.', 'warning'); return; }
+    if (!start || !end) { showToast('Selecciona fecha de inicio y fin.', 'warning'); return; }
     try {
         const response = await fetchWithAuth(`${API_BASE_URL}/reports/pdf?startDate=${encodeURIComponent(start)}&endDate=${encodeURIComponent(end)}`);
         if (!response.ok) return;
@@ -595,13 +613,13 @@ async function generatePdfReport() {
         const url = URL.createObjectURL(blob);
         window.open(url, '_blank');
         setTimeout(() => URL.revokeObjectURL(url), 60000);
-    } catch (_e) { showToast('Failed to generate PDF.', 'danger'); }
+    } catch (_e) { showToast('Error al generar el PDF.', 'danger'); }
 }
 
 async function generateExcelReport() {
     const start = document.getElementById('reportStartDate')?.value;
     const end = document.getElementById('reportEndDate')?.value;
-    if (!start || !end) { showToast('Select start and end dates.', 'warning'); return; }
+    if (!start || !end) { showToast('Selecciona fecha de inicio y fin.', 'warning'); return; }
     try {
         const response = await fetchWithAuth(`${API_BASE_URL}/reports/excel?startDate=${encodeURIComponent(start)}&endDate=${encodeURIComponent(end)}`);
         if (!response.ok) return;
@@ -612,15 +630,15 @@ async function generateExcelReport() {
         a.download = `report-${start}-${end}.xlsx`;
         a.click();
         setTimeout(() => URL.revokeObjectURL(url), 10000);
-    } catch (_e) { showToast('Failed to generate Excel.', 'danger'); }
+    } catch (_e) { showToast('Error al generar el Excel.', 'danger'); }
 }
 
 // ========== PLACEHOLDERS ==========
 
-function editTransaction(id) { showToast('Edit transaction coming soon.', 'info'); }
-function deleteTransaction(id) { if (confirm('Delete this transaction?')) showToast('Delete coming soon.', 'info'); }
-function editCategory(id) { showToast('Edit category coming soon.', 'info'); }
-function deleteCategory(id) { if (confirm('Delete this category?')) showToast('Delete coming soon.', 'info'); }
+function editTransaction(id) { showToast('La edición de transacciones estará disponible pronto.', 'info'); }
+function deleteTransaction(id) { if (confirm('¿Eliminar esta transacción?')) showToast('La eliminación estará disponible pronto.', 'info'); }
+function editCategory(id) { showToast('La edición de categorías estará disponible pronto.', 'info'); }
+function deleteCategory(id) { if (confirm('¿Eliminar esta categoría?')) showToast('La eliminación estará disponible pronto.', 'info'); }
 
 // ========== ENTRADA ==========
 

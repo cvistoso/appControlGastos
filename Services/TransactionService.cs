@@ -21,10 +21,17 @@ namespace ExpenseControlApp.Services
                 .Where(t => t.UserId == userId);
 
             if (startDate.HasValue)
-                query = query.Where(t => t.Date >= startDate.Value.ToUniversalTime());
+            {
+                var startUtc = DateTime.SpecifyKind(startDate.Value.Date, DateTimeKind.Utc);
+                query = query.Where(t => t.Date >= startUtc);
+            }
 
             if (endDate.HasValue)
-                query = query.Where(t => t.Date <= endDate.Value.ToUniversalTime());
+            {
+                var endOfDay = endDate.Value.Date.AddDays(1).AddTicks(-1);
+                var endUtc = DateTime.SpecifyKind(endOfDay, DateTimeKind.Utc);
+                query = query.Where(t => t.Date <= endUtc);
+            }
 
             if (!string.IsNullOrEmpty(categoryId) && int.TryParse(categoryId, out int catId))
                 query = query.Where(t => t.CategoryId == catId);
