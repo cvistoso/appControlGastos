@@ -4,29 +4,32 @@
 - .NET 9.0 SDK
 - PostgreSQL 15 (or Docker)
 
-## Option 1: Local Development
+## Option 1: Local Development (sin Docker)
 
-1. **Install PostgreSQL 15**
+1. **Requisitos**
+   - .NET 10 SDK (o .NET 9; el proyecto está configurado para .NET 10)
+   - PostgreSQL 15+ en ejecución (puerto 5432)
+
+2. **PostgreSQL**
    ```bash
-   # macOS with Homebrew
+   # macOS con Homebrew
    brew install postgresql@15
    brew services start postgresql@15
-   
-   # Create database
-   createdb ExpenseControlDB
    ```
+   La aplicación crea la base de datos automáticamente en el primer arranque (`ExpenseControlDB_Dev` en Development).  
+   Ajusta usuario/contraseña en `appsettings.Development.json` si es necesario (por defecto: `postgres` / `password`).
 
-2. **Clone and run the application**
+3. **Ejecutar la aplicación**
    ```bash
-   git clone <repository-url>
    cd appControlGastos
    dotnet restore
-   dotnet run
+   dotnet run --launch-profile http
    ```
+   Se usa el puerto **5050** (evita conflicto con AirPlay en macOS que usa 5000).
 
-3. **Access the application**
-   - Web UI: `https://localhost:5001`
-   - API Docs: `https://localhost:5001/swagger`
+4. **Acceder a la aplicación**
+   - Web UI: **http://localhost:5050**
+   - API Docs: **http://localhost:5050/swagger**
 
 ## Option 2: Docker (Recommended)
 
